@@ -1,9 +1,11 @@
+import os
 import random
+from PIL import Image
 import streamlit as st
 
 # ページ設定
 st.set_page_config(
-    page_title="神葬アトリエ：3匹の育成工房", page_icon="⚔️", layout="wide"
+    page_title="神葬アトリエ：画像インポート版", page_icon="⚔️", layout="wide"
 )
 
 # 定数データ
@@ -16,16 +18,16 @@ WEAPONS = ["ロングソード", "大鎌", "銃", "弓"]
 if "gold" not in st.session_state:
   st.session_state.gold = 1000
 if "creatures" not in st.session_state:
-  # 3匹の初期データ
   st.session_state.creatures = [
     {
       "name": "実験体A",
-      "stage": 1,  # 1: 幼体, 2: 成長期, 3: 半神人型, 4: 神葬解放
+      "stage": 1,  # 1: 幼体, 2: 成長期, 3: 半神人型, 4: 神葬解放（最終）
       "biome": "ドラゴン型",
       "elem1": "炎",
       "elem2": "結晶",
       "weapon": "ロングソード",
       "exp": 0,
+      "image_filename": "stage1_dragon.png",  # 紐付ける画像ファイル名
     },
     {
       "name": "実験体B",
@@ -35,6 +37,7 @@ if "creatures" not in st.session_state:
       "elem2": "血",
       "weapon": "大鎌",
       "exp": 0,
+      "image_filename": "stage1_beast.png",
     },
     {
       "name": "実験体C",
@@ -44,29 +47,24 @@ if "creatures" not in st.session_state:
       "elem2": "植物",
       "weapon": "弓",
       "exp": 0,
+      "image_filename": "stage1_insect.png",
     },
   ]
 
 
-# プロンプト生成関数（Gemini画像生成用などに応用可能）
-def generate_prompt(c):
-  if c["stage"] < 4:
-    return (
-        f"A fantasy monster, base species is {c['biome']}, infused with"
-        f" element {c['elem1']} and secondary element {c['elem2']}, cute"
-        f" growing stage {c['stage']}, digital art"
-    )
+# 画像を安全に読み込む関数
+def load_creature_image(filename):
+  image_path = os.path.join("assets", filename)
+  if os.path.exists(image_path):
+    return Image.open(image_path)
   else:
-    return (
-        f"A masterclass fantasy humanoid divine warrior holding a divine weapon"
-        f" [{c['weapon']}], base creature was {c['biome']}, infused with"
-        f" {c['elem1']} and {c['elem2']}, epic masterpiece, dark fantasy, 8k"
-        f" resolution"
-    )
+    # 画像ファイルがない場合のダミー生成（またはデフォルト画像）
+    # ここでは見つからない旨のプレースホルダーを返す代わりにNoneにする
+    return None
 
 
 # タイトル
-st.title("⚔️ 神葬アトリエ：3匹の育成＆戦闘工房")
+st.title("⚔️ 神葬アトリエ：画像読込＆育成工房")
 st.sidebar.markdown(f"### 所持金: 💰 {st.session_state.gold} G")
 
 # メインメニュー
@@ -80,17 +78,23 @@ if menu == "育成ルーム":
 
   for i, c in enumerate(st.session_state.creatures):
     with cols[i]:
-      st.subheader(f"{c['name']} (Lv.{c['stage']})")
-      # ビジュアルプレースホルダー（実際のアプリではGemini画像を表示）
+      st.subheader(f"{c['name']} (Stage {c['stage']})")
+
+      # 画像の表示
+      img = load_creature_image(c["image_filename"])
+      if img:
+        st.image(img, use_container_width=True)
+      else:
+        st.warning(
+            f"🖼️ 画像が見つかりません\n`assets/{c['image_filename']}` を配置してください"
+        )
+
       st.info(
           f"**生物種**: {c['biome']}\n\n**主属性**: {c['elem1']} |"
           f" **副属性**: {c['elem2']}\n\n**武器種**: {c['weapon']}"
       )
       st.write(f"成長度 (EXP): {c['exp']}/100")
       st.progress(c["exp"])
-
-      prompt_preview = generate_prompt(c)
-      st.caption(f"生成プロンプト案:\n`{prompt_preview}`")
 
 elif menu == "素材調合・エサやり":
   st.header("🥣 育成・エサやりカスタム")
@@ -111,10 +115,14 @@ elif menu == "素材調合・エサやり":
     )
     new_weapon = st.selectbox(
         "武器種を設定（変異トリガー）",
-    
         WEAPONS,
         index=WEAPONS.index(c["weapon"]),
     )
+
+  # 画像ファイルの切り替え設定（簡易的ルール）
+  new_img_filename = st.text_input(
+      "表示する画像ファイル名 (assets/ フォルダ内)", value=c["image_filename"]
+  )
 
   if st.button("エサを与えて育成する (-100G)"):
     if st.session_state.gold >= 100:
@@ -123,6 +131,7 @@ elif menu == "素材調合・エサやり":
       c["elem1"] = new_elem1
       c["elem2"] = new_elem2
       c["weapon"] = new_weapon
+      c["image_filename"] = new_img_filename
       c["exp"] += 35
 
       if c["exp"] >= 100 and c["stage"] < 4:
@@ -148,8 +157,7 @@ elif menu == "戦闘ステージ出撃":
   )
 
   if st.button("バトル開始！"):
-    # 簡易戦闘シミュレーション
-    success = random.choice([True, True, False])  # 2/3の確率で勝利
+    success = random.choice([True, True, False])
     if success:
       reward_gold = 400
       st.session_state.gold += reward_gold
@@ -159,15 +167,11 @@ elif menu == "戦闘ステージ出撃":
           f"🎉 勝利！ 報酬として {reward_gold}G を獲得し、3匹の経験値がアップしました！"
       )
     else:
-      st.warning("⚠️ 敵の反撃により敗退…特訓し直して再挑戦しよう。")
+      st.warning("⚠️ 敗退…育成ルームでステータスや画像を調整して再挑戦しよう。")
 
 elif menu == "図鑑":
   st.header("📖 神葬アルカディア図鑑")
-  st.write(
-      "これまでに到達した究極の「神葬武器持ち人型形態」の記録を残します。"
-  )
+  st.write("これまでに用意した画像と到達した形態の記録。")
   for b in BIOMES:
     for w in WEAPONS:
-      st.markdown(
-          f"- **[未解放]** 生物種: `{b}` × 武器種: `{w}` （最終形態未到達）"
-      )
+      st.markdown(f"- 生物種: `{b}` × 武器種: `{w}` （登録スロット）")
