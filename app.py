@@ -65,24 +65,24 @@ def get_smart_creature_image(c):
 
   # ステージごとの詳細度に応じたファイル名候補の優先リストを生成
   if stage == 1:
-    candidate_filenames = [f"stage1_{biome}.png"]
+    candidate_filenames = [f"stage1_{biome}.jpg"]
   elif stage == 2:
     candidate_filenames = [
-        f"stage2_{biome}_{elem1}.png",
-        f"stage1_{biome}.png",
+        f"stage2_{biome}_{elem1}.jpg",
+        f"stage1_{biome}.jpg",
     ]
   elif stage == 3:
     candidate_filenames = [
-        f"stage3_{biome}_{elem1}_{elem2}.png",
-        f"stage2_{biome}_{elem1}.png",
-        f"stage1_{biome}.png",
+        f"stage3_{biome}_{elem1}_{elem2}.jpg",
+        f"stage2_{biome}_{elem1}.jpg",
+        f"stage1_{biome}.jpg",
     ]
   elif stage >= 4:
     candidate_filenames = [
-        f"final_{biome}_{elem1}_{elem2}_{weapon}.png",
-        f"stage3_{biome}_{elem1}_{elem2}.png",
-        f"stage2_{biome}_{elem1}.png",
-        f"stage1_{biome}.png",
+        f"final_{biome}_{elem1}_{elem2}_{weapon}.jpgg",
+        f"stage3_{biome}_{elem1}_{elem2}.jpg",
+        f"stage2_{biome}_{elem1}.jpg",
+        f"stage1_{biome}.jpg",
     ]
 
   # フォルダ内を上から順に探し、最初に見つかった画像を採用
