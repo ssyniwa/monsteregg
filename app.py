@@ -5,7 +5,7 @@ import streamlit as st
 
 # ページ設定
 st.set_page_config(
-    page_title="神葬アトリエ：アルカディアの箱庭", page_icon="⚔️", layout="wide"
+    page_title="神葬アトリエ：本格戦闘＆育成工房", page_icon="⚔️", layout="wide"
 )
 
 # 定数データ
@@ -13,6 +13,46 @@ BIOMES = ["ドラゴン型", "獣型", "昆虫型", "飛行型", "水棲型"]
 ELEM1 = ["炎", "氷", "雷"]
 ELEM2 = ["植物", "血", "結晶"]
 WEAPONS = ["ロングソード", "大鎌", "銃", "弓"]
+
+# 戦闘ステージの定義（敵情報や難易度）
+BATTLE_STAGES = {
+    "初級：魔石の林": {
+        "desc": "魔力を帯びた植物と小型モンスターがうろつく森。",
+        "enemy_name": "フォレスト・キメラ",
+        "enemy_image": "enemy_forest.jpg",
+        "enemy_hp": 150,
+        "enemy_atk": 20,
+        "reward_gold": 300,
+        "reward_exp": 30,
+    },
+    "中級：機械神殿の遺跡": {
+        "desc": "古代の防衛機構が目覚めた危険な遺跡。",
+        "enemy_name": "ガーディアン・ゴーレム",
+        "enemy_image": "enemy_ruins.jpg",
+        "enemy_hp": 300,
+        "enemy_atk": 45,
+        "reward_gold": 700,
+        "reward_exp": 50,
+    },
+    "上級：神葬の塔": {
+        "desc": "神話の兵器が眠る、過酷な試練の塔。",
+        "enemy_name": "ファントム・ナイト",
+        "enemy_image": "enemy_tower.jpg",
+        "enemy_hp": 550,
+        "enemy_atk": 80,
+        "reward_gold": 1500,
+        "reward_exp": 80,
+    },
+    "最上級：アルカディアの王座": {
+        "desc": "すべての頂点に君臨する、神話級の守護者との決戦。",
+        "enemy_name": "神葬の主・ゼニス",
+        "enemy_image": "enemy_god.jpg",
+        "enemy_hp": 900,
+        "enemy_atk": 120,
+        "reward_gold": 3000,
+        "reward_exp": 150,
+    },
+}
 
 # 初期セッション状態の定義
 if "gold" not in st.session_state:
@@ -23,7 +63,7 @@ if "creatures" not in st.session_state:
   st.session_state.creatures = [
       {
           "name": "実験体α",
-          "stage": 1,  # 1: 幼体, 2: 成長期, 3: 半神人型, 4: 神葬解放（最終）
+          "stage": 1,
           "biome": "ドラゴン型",
           "elem1": "炎",
           "elem2": "結晶",
@@ -52,7 +92,7 @@ if "creatures" not in st.session_state:
 
 
 # ==========================================
-# 賢いフォールバック付き画像読み込み関数
+# 画像読み込み関数（フォールバック付き）
 # ==========================================
 def get_smart_creature_image(c):
   stage = c["stage"]
@@ -61,48 +101,48 @@ def get_smart_creature_image(c):
   elem2 = c["elem2"]
   weapon = c["weapon"]
 
-  candidate_filenames = []
-
-  # ステージごとの詳細度に応じたファイル名候補の優先リストを生成
   if stage == 1:
-    candidate_filenames = [f"stage1_{biome}.jpg"]
+    candidates = [f"stage1_{biome}.jpg"]
   elif stage == 2:
-    candidate_filenames = [
-        f"stage2_{biome}_{elem1}.jpg",
-        f"stage1_{biome}.jpg",
-    ]
+    candidates = [f"stage2_{biome}_{elem1}.jpg", f"stage1_{biome}.jpg"]
   elif stage == 3:
-    candidate_filenames = [
+    candidates = [
         f"stage3_{biome}_{elem1}_{elem2}.jpg",
         f"stage2_{biome}_{elem1}.jpg",
         f"stage1_{biome}.jpg",
     ]
-  elif stage >= 4:
-    candidate_filenames = [
+  else:
+    candidates = [
         f"final_{biome}_{elem1}_{elem2}_{weapon}.jpg",
         f"stage3_{biome}_{elem1}_{elem2}.jpg",
-        f"stage2_{biome}_{elem1}.jpg",
         f"stage1_{biome}.jpg",
     ]
 
-  # フォルダ内を上から順に探し、最初に見つかった画像を採用
-  for filename in candidate_filenames:
-    image_path = os.path.join("assets", filename)
-    if os.path.exists(image_path):
-      return Image.open(image_path), filename
+  for filename in candidates:
+    path = os.path.join("assets", filename)
+    if os.path.exists(path):
+      return Image.open(path), filename
 
-  # 全て見つからない場合のフォールバック（default.png）
   default_path = os.path.join("assets", "default.jpg")
   if os.path.exists(default_path):
     return Image.open(default_path), "default.jpg"
-
   return None, None
 
 
+def load_enemy_image(filename):
+  path = os.path.join("assets", filename)
+  if os.path.exists(path):
+    return Image.open(path)
+  default_path = os.path.join("assets", "default.jpg")
+  if os.path.exists(default_path):
+    return Image.open(default_path)
+  return None
+
+
 # ==========================================
-# UIデザイン & ナビゲーション
+# UI & ナビゲーション
 # ==========================================
-st.title("⚔️ 神葬アトリエ：3匹の育成＆戦闘工房")
+st.title("⚔️ 神葬アトリエ：本格戦闘＆育成工房")
 st.sidebar.markdown(f"### 💰 所持金: {st.session_state.gold} G")
 
 menu = st.sidebar.selectbox(
@@ -112,26 +152,17 @@ menu = st.sidebar.selectbox(
 # 1. 育成ルーム
 if menu == "育成ルーム":
   st.header("🧪 育成槽（3匹の管理）")
-  st.write(
-      "現在育成中の3匹の個体ステータスと、進捗状況を確認できます。段階に応じて最適な画像が自動で反映されます。"
-  )
   cols = st.columns(3)
 
   for i, c in enumerate(st.session_state.creatures):
     with cols[i]:
       st.subheader(f"{c['name']} (Stage {c['stage']})")
-
-      # 画像の表示とフォールバック情報の取得
       img, used_file = get_smart_creature_image(c)
       if img:
         st.image(img, use_container_width=True)
-        st.caption(f"📁 読込画像: `{used_file}`")
       else:
-        st.warning(
-            "🖼️ 画像がありません\n`assets/` フォルダに画像を追加してください"
-        )
+        st.warning("🖼️ 画像が見つかりません")
 
-      # ステータス表示
       st.info(
           f"**生物種**: {c['biome']}\n\n"
           f"**主属性**: {c['elem1']} | **副属性**: {c['elem2']}\n\n"
@@ -140,21 +171,14 @@ if menu == "育成ルーム":
       st.write(f"成長度 (EXP): {c['exp']}/100")
       st.progress(c["exp"] / 100.0)
 
-      # 最終形態に到達している場合、図鑑に登録
       if c["stage"] >= 4:
-        encyclopedia_key = (
-            f"{c['biome']}_{c['elem1']}_{c['elem2']}_{c['weapon']}"
-        )
-        if encyclopedia_key not in st.session_state.unlocked_encyclopedia:
-          st.session_state.unlocked_encyclopedia.append(encyclopedia_key)
+        key = f"{c['biome']}_{c['elem1']}_{c['elem2']}_{c['weapon']}"
+        if key not in st.session_state.unlocked_encyclopedia:
+          st.session_state.unlocked_encyclopedia.append(key)
 
 # 2. 素材調合・エサやり
 elif menu == "素材調合・エサやり":
   st.header("🥣 育成・エサやりカスタム")
-  st.write(
-      "素材や触媒を投与して、個体の生物種や属性、武器適性を変化させます（費用: 100G）。"
-  )
-
   target_idx = st.selectbox(
       "育成する個体を選択",
       [0, 1, 2],
@@ -167,15 +191,11 @@ elif menu == "素材調合・エサやり":
     new_biome = st.selectbox(
         "生物種（ベースボディ）", BIOMES, index=BIOMES.index(c["biome"])
     )
-    new_elem1 = st.selectbox("主属性 (属性1)", ELEM1, index=ELEM1.index(c["elem1"]))
+    new_elem1 = st.selectbox("主属性", ELEM1, index=ELEM1.index(c["elem1"]))
   with col2:
-    new_elem2 = st.selectbox(
-        "副属性 (属性2)", ELEM2, index=ELEM2.index(c["elem2"])
-    )
+    new_elem2 = st.selectbox("副属性", ELEM2, index=ELEM2.index(c["elem2"]))
     new_weapon = st.selectbox(
-        "武器種（変異トリガー）",
-        WEAPONS,
-        index=WEAPONS.index(c["weapon"]),
+        "武器種", WEAPONS, index=WEAPONS.index(c["weapon"])
     )
 
   if st.button("🌟 特製エサを与えて育成する (-100G)"):
@@ -185,84 +205,129 @@ elif menu == "素材調合・エサやり":
       c["elem1"] = new_elem1
       c["elem2"] = new_elem2
       c["weapon"] = new_weapon
-      c["exp"] += 40  # 経験値加算
+      c["exp"] += 40
 
-      # 経験値が100を超えたら次のステージへ進化
       if c["exp"] >= 100 and c["stage"] < 4:
         c["stage"] += 1
         c["exp"] = 0
         st.success(
-            f"✨ 素晴らしい！ {c['name']} が ステージ {c['stage']}"
-            " に進化しました！"
+            f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
         )
       elif c["stage"] >= 4:
         c["exp"] = 100
-        st.success(
-            f"✨ {c['name']}"
-            " はすでに神話級の最終形態に到達しています！ステータスが更新されました。"
-        )
+        st.success(f"✨ {c['name']} のステータスが更新されました！")
       else:
-        st.success(f"{c['name']} にエサを与えました！ 成長が進んでいます。")
+        st.success(f"{c['name']} にエサを与えました！")
       st.rerun()
     else:
-      st.error("❌ ゴールドが足りません！「戦闘ステージ出撃」で稼ぎましょう。")
+      st.error("❌ ゴールドが足りません！")
 
-# 3. 戦闘ステージ出撃
+# 3. 戦闘ステージ出撃（本格ターン制バトル）
 elif menu == "戦闘ステージ出撃":
-  st.header("⚔️ バトル・ダンジョン探索")
+  st.header("⚔️ 本格バトル・ダンジョン探索")
   st.write(
-      "育てた3匹のチームでダンジョンに挑み、勝利報酬としてゴールドと経験値を獲得します。"
+      "育てた3匹のチームで強敵に挑みます。各個体の進化ステージや装備が戦闘力を大きく左右します。"
   )
 
-  stage_level = st.selectbox(
-      "出撃ステージ選択",
-      [
-          "初級：魔石の林 (難易度低・報酬少)",
-          "中級：機械神殿の遺跡 (難易度中・報酬中)",
-          "上級：神葬の塔 (難易度高・報酬高)",
-      ],
+  selected_stage_name = st.selectbox(
+      "挑戦するステージを選択", list(BATTLE_STAGES.keys())
   )
+  stage_info = BATTLE_STAGES[selected_stage_name]
 
-  if st.button("🚀 チーム出撃！ バトル開始"):
-    # 難易度に応じた勝率と報酬設定
-    if "初級" in stage_level:
-      win_prob, reward = 0.85, 300
-    elif "中級" in stage_level:
-      win_prob, reward = 0.65, 600
-    else:
-      win_prob, reward = 0.45, 1200
+  # 敵情報の表示
+  col_enemy_info, col_enemy_img = st.columns([2, 1])
+  with col_enemy_info:
+    st.subheader(f"🛡️ 遭遇エネミー: {stage_info['enemy_name']}")
+    st.markdown(f"*{stage_info['desc']}*")
+    st.metric(label="敵HP", value=stage_info["enemy_hp"])
+    st.metric(label="敵攻撃力", value=stage_info["enemy_atk"])
+    st.write(
+        f"🎁 勝利報酬: 💰 **{stage_info['reward_gold']} G** / 🌟 経験値"
+        f" **{stage_info['reward_exp']}**"
+    )
 
-    if random.random() < win_prob:
-      st.session_state.gold += reward
+  with col_enemy_img:
+    enemy_img = load_enemy_image(stage_info["enemy_image"])
+    if enemy_img:
+      st.image(
+          enemy_img,
+          use_container_width=True,
+          caption=stage_info["enemy_name"],
+      )
+
+  st.divider()
+
+  if st.button("🚀 チーム出撃！ ターン制バトル開始"):
+    # チームの総合戦闘力計算（ステージが高いほど有利、武器種や進化段階が影響）
+    total_party_power = sum(
+        [
+            (c["stage"] * 40)
+            + (50 if c["stage"] == 4 else 0)
+            + random.randint(10, 30)
+            for c in st.session_state.creatures
+        ]
+    )
+    enemy_hp = stage_info["enemy_hp"]
+    enemy_atk = stage_info["enemy_atk"]
+
+    # 簡易ターンシミュレーション
+    battle_logs = []
+    turn = 1
+    victory = False
+
+    while turn <= 5:
+      # プレイヤーチームの攻撃
+      party_damage = total_party_power + random.randint(-10, 20)
+      enemy_hp -= party_damage
+      battle_logs.append(
+          f"ターン {turn}: チームの総攻撃！ 敵に **{party_damage}** のダメージ！"
+          f" (残り敵HP: {max(0, enemy_hp)})"
+      )
+
+      if enemy_hp <= 0:
+        victory = True
+        break
+
+      # 敵の反撃
+      battle_logs.append(
+          f"ターン {turn}: 敵の反撃！ チームに **{enemy_atk}** のダメージ！"
+      )
+      turn += 1
+
+    # 結果判定
+    st.subheader("📜 戦闘ログ")
+    for log in battle_logs:
+      st.write(log)
+
+    if victory or enemy_hp <= 0:
+      reward_g = stage_info["reward_gold"]
+      reward_e = stage_info["reward_exp"]
+      st.session_state.gold += reward_g
+
       for c in st.session_state.creatures:
-        c["exp"] += 25
+        c["exp"] += reward_e
         if c["exp"] >= 100 and c["stage"] < 4:
           c["stage"] += 1
           c["exp"] = 0
+
       st.success(
-          f"🎉 討伐成功！ 報酬として **{reward} G** を獲得し、3匹の経験値が上昇しました！"
+          f"🎉 討伐成功！ 報酬として **{reward_g} G** を獲得し、3匹全員が強くなりました！"
       )
     else:
-      st.warning(
-          "⚠️ 敵の反撃に遭い、撤退しました…。育成ルームでエサを与えて強化し直しましょう。"
+      st.error(
+          "⚠️ 敵の圧倒的な力の前に敗北しました…。育成ルームでさらに特訓・進化させてから挑みましょう！"
       )
 
 # 4. 図鑑
 elif menu == "図鑑":
   st.header("📖 神葬アルカディア図鑑")
-  st.write(
-      "これまでに到達した「神葬武器持ちの最終人型形態」のコレクション記録です。"
-  )
-
   unlocked_count = len(st.session_state.unlocked_encyclopedia)
   st.metric(
-      label="図鑑コンプリート状況",
+      label="コンプリート状況",
       value=f"{unlocked_count} / {len(BIOMES) * len(ELEM1) * len(ELEM2) * len(WEAPONS)}",
   )
-
   st.divider()
 
-  # 全組み合わせの図鑑グリッド表示
   for b in BIOMES:
     with st.expander(f"📌 生物種ベース: {b}"):
       for w in WEAPONS:
