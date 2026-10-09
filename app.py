@@ -79,7 +79,7 @@ def get_smart_creature_image(c):
     ]
   elif stage >= 4:
     candidate_filenames = [
-        f"final_{biome}_{elem1}_{elem2}_{weapon}.jpgg",
+        f"final_{biome}_{elem1}_{elem2}_{weapon}.jpg",
         f"stage3_{biome}_{elem1}_{elem2}.jpg",
         f"stage2_{biome}_{elem1}.jpg",
         f"stage1_{biome}.jpg",
@@ -92,9 +92,9 @@ def get_smart_creature_image(c):
       return Image.open(image_path), filename
 
   # 全て見つからない場合のフォールバック（default.png）
-  default_path = os.path.join("assets", "default.png")
+  default_path = os.path.join("assets", "default.jpg")
   if os.path.exists(default_path):
-    return Image.open(default_path), "default.png"
+    return Image.open(default_path), "default.jpg"
 
   return None, None
 
