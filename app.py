@@ -5,7 +5,7 @@ import streamlit as st
 
 # ページ設定
 st.set_page_config(
-    page_title="神葬アトリエ：本格交代バトル＆育成工房", page_icon="⚔️", layout="wide"
+    page_title="神葬アトリエ：交代制バトル＆育成工房", page_icon="⚔️", layout="wide"
 )
 
 # 定数データ
@@ -195,13 +195,13 @@ BATTLE_STAGES = {
     },
 }
 
-# 初期セッション状態の定義
+# 初期セッション状態の定義（初期資金を600に変更）
 if "gold" not in st.session_state:
-  st.session_state.gold = 1500
+  st.session_state.gold = 600
 if "unlocked_encyclopedia" not in st.session_state:
   st.session_state.unlocked_encyclopedia = []
 if "battle_state" not in st.session_state:
-  st.session_state.battle_state = None  # バトル中のデータを保持
+  st.session_state.battle_state = None
 if "creatures" not in st.session_state:
   st.session_state.creatures = [
       {
@@ -315,7 +315,7 @@ menu = st.sidebar.selectbox(
 if menu == "育成ルーム":
   st.header("🧪 育成槽（3匹の管理 & 種族特性）")
   st.markdown(
-      "種族ごとに**体力・攻撃・防御・素早さ**の特性が異なります。資金を使った育成でさらにステータスを強化できます。"
+      "種族ごとに**体力・攻撃・防御・素早さ**の特性が異なります。資金を使った育成でのみステータスと進化が進みます。"
   )
   cols = st.columns(3)
 
@@ -344,11 +344,11 @@ if menu == "育成ルーム":
         if key not in st.session_state.unlocked_encyclopedia:
           st.session_state.unlocked_encyclopedia.append(key)
 
-# 2. 素材調合・エサやり (ステータス強化対応)
+# 2. 素材調合・エサやり (合計35制限・資金消費でのみ成長・強化)
 elif menu == "素材調合・エサやり":
   st.header("🥣 育成・エサやり & ステータス強化カスタム")
   st.markdown(
-      "素材と資金(200G)を投資して、生物種や属性の変更だけでなく、個体の**HP・攻撃力・防御力**を直接強化できます。"
+      "素材と資金(200G)を投資して育成を行います。**1回のエサやりでのHP・攻撃・防御の上昇値の合計は最大35まで**に制限されています。"
   )
 
   target_idx = st.selectbox(
@@ -371,51 +371,60 @@ elif menu == "素材調合・エサやり":
     )
 
   st.divider()
-  st.subheader("💪 追加ステータス強化 (費用: 200G)")
-  inc_hp = st.number_input("HP強化 (+)", min_value=0, max_value=100, step=10, value=20)
+  st.subheader("💪 追加ステータス強化 (費用: 200G / 上昇合計上限: 35)")
+  inc_hp = st.number_input("HP強化 (+)", min_value=0, max_value=35, step=5, value=15)
   inc_atk = st.number_input(
-      "攻撃力強化 (+)", min_value=0, max_value=50, step=5, value=10
+      "攻撃力強化 (+)", min_value=0, max_value=35, step=5, value=10
   )
   inc_def = st.number_input(
-      "防御力強化 (+)", min_value=0, max_value=50, step=5, value=5
+      "防御力強化 (+)", min_value=0, max_value=35, step=5, value=10
   )
 
+  total_inc = inc_hp + inc_atk + inc_def
+  st.write(f"現在のステータス上昇合計値: **{total_inc} / 35**")
+
   if st.button("🌟 特製エサを与えて育成・強化する (-200G)"):
-    cost = 200
-    if st.session_state.gold >= cost:
-      st.session_state.gold -= cost
-      c["biome"] = new_biome
-      c["elem1"] = new_elem1
-      c["elem2"] = new_elem2
-      c["weapon"] = new_weapon
-      c["bonus_hp"] += inc_hp
-      c["bonus_atk"] += inc_atk
-      c["bonus_def"] += inc_def
-      c["exp"] += 45
-
-      if c["exp"] >= 100 and c["stage"] < 4:
-        c["stage"] += 1
-        c["exp"] = 0
-        st.success(
-            f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
-        )
-      else:
-        st.success(
-            f"✨ {c['name']} の育成とステータス強化が完了しました！"
-        )
-      st.rerun()
+    if total_inc > 35:
+      st.error(
+          "❌ 1回のエサやりでの上昇値の合計が35を超えています！配分を調整してください。"
+      )
     else:
-      st.error("❌ ゴールドが足りません！バトルステージで稼ぎましょう。")
+      cost = 200
+      if st.session_state.gold >= cost:
+        st.session_state.gold -= cost
+        c["biome"] = new_biome
+        c["elem1"] = new_elem1
+        c["elem2"] = new_elem2
+        c["weapon"] = new_weapon
+        c["bonus_hp"] += inc_hp
+        c["bonus_atk"] += inc_atk
+        c["bonus_def"] += inc_def
+        c["exp"] += 45
 
-# 3. 戦闘ステージ出撃（交代制ターンバトル実装）
+        if c["exp"] >= 100 and c["stage"] < 4:
+          c["stage"] += 1
+          c["exp"] = 0
+          st.success(
+              f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
+          )
+        else:
+          st.success(
+              f"✨ {c['name']} の育成とステータス強化が完了しました！"
+          )
+        st.rerun()
+      else:
+        st.error(
+            "❌ ゴールドが足りません！バトルステージでゴールドを稼ぎましょう。"
+        )
+
+# 3. 戦闘ステージ出撃（クリア時自動成長なし・交代制バトル）
 elif menu == "戦闘ステージ出撃":
   st.header("⚔️ 交代制ターンバトル・ダンジョン探索")
+  st.markdown(
+      "⚠️ **注意**: 戦闘に勝利してもキャラクターの経験値やステータスは自動で成長しません。バトルはあくまで資金（ゴールド）を稼ぐための手段です！"
+  )
 
-  # バトルが始まっていない場合はステージ選択画面
   if st.session_state.battle_state is None:
-    st.write(
-        "挑戦するステージを選択してください。各ステージには**ボス1体と配下4体**が待ち受けています。"
-    )
     selected_stage_name = st.selectbox(
         "出撃ステージ選択", list(BATTLE_STAGES.keys())
     )
@@ -429,8 +438,7 @@ elif menu == "戦闘ステージ出撃":
           f"📦 **配下モンスター**: {len(stage_info['minions'])}体 (最初に迎撃)"
       )
       st.write(
-          f"🎁 勝利報酬: 💰 **{stage_info['reward_gold']} G** / 🌟 経験値"
-          f" **{stage_info['reward_exp']}**"
+          f"🎁 勝利報酬: 💰 **{stage_info['reward_gold']} G** (※経験値の獲得はありません)"
       )
     with col_img:
       boss_img = load_image(stage_info["boss"]["image"])
@@ -438,7 +446,6 @@ elif menu == "戦闘ステージ出撃":
         st.image(boss_img, use_container_width=True, caption="ステージボス")
 
     if st.button("🚀 このステージに出撃する！"):
-      # バトルデータの初期化
       party = []
       for idx, c in enumerate(st.session_state.creatures):
         st_data = calculate_stats(c)
@@ -454,9 +461,7 @@ elif menu == "戦闘ステージ出撃":
             "image": get_smart_creature_image(c)[1],
         })
 
-      # 敵リストの構築（配下4体 ＋ ボス1体 = 計5体）
       enemies = []
-      # 配下4体
       for m in stage_info["minions"]:
         enemies.append({
             "name": m["name"],
@@ -467,7 +472,6 @@ elif menu == "戦闘ステージ出撃":
             "image": m["image"],
             "is_boss": False,
         })
-      # ボス1体
       b = stage_info["boss"]
       enemies.append({
           "name": b["name"],
@@ -482,20 +486,18 @@ elif menu == "戦闘ステージ出撃":
       st.session_state.battle_state = {
           "stage_name": selected_stage_name,
           "party": party,
-          "active_party_idx": 0,  # 現在戦っている味方のインデックス
+          "active_party_idx": 0,
           "enemies": enemies,
-          "active_enemy_idx": 0,  # 現在戦っている敵のインデックス
+          "active_enemy_idx": 0,
           "logs": [
               f"=== {selected_stage_name} 戦闘開始 ===",
               f"敵の群れ（配下4体 ＋ ボス1体）が現れた！",
           ],
           "reward_gold": stage_info["reward_gold"],
-          "reward_exp": stage_info["reward_exp"],
       }
       st.rerun()
 
   else:
-    # --- バトル中の画面と処理 ---
     b_state = st.session_state.battle_state
     party = b_state["party"]
     active_p_idx = b_state["active_party_idx"]
@@ -509,7 +511,6 @@ elif menu == "戦闘ステージ出撃":
         f"⚔️ バトル進行中: {b_state['stage_name']} (残りの敵: {len(enemies)-active_e_idx}体)"
     )
 
-    # 戦闘フィールドの表示（味方 vs 敵）
     col_ally_field, col_vs, col_enemy_field = st.columns([2, 1, 2])
 
     with col_ally_field:
@@ -545,13 +546,10 @@ elif menu == "戦闘ステージ出撃":
 
     st.divider()
 
-    # バトルアクション操作パネル
     col_act1, col_act2, col_act3 = st.columns(3)
 
-    # 1. 攻撃ボタン
     with col_act1:
       if st.button("⚔️ 通常攻撃", use_container_width=True):
-        # プレイヤーの攻撃
         dmg_to_enemy = max(
             5, current_ally["atk"] - int(current_enemy["def"] * 0.5)
         )
@@ -562,7 +560,6 @@ elif menu == "戦闘ステージ出撃":
             f" **{dmg_to_enemy}** のダメージ！",
         )
 
-        # 敵の生存確認
         if current_enemy["hp"] <= 0:
           b_state["logs"].insert(
               0, f"✨ {current_enemy['name']} を倒した！"
@@ -570,23 +567,16 @@ elif menu == "戦闘ステージ出撃":
           active_e_idx += 1
           b_state["active_enemy_idx"] = active_e_idx
 
-          # 全ての敵を倒したか判定
           if active_e_idx >= len(enemies):
-            # 勝利処理
+            # 勝利処理（ゴールド報酬のみ付与、経験値や自動成長はなし）
             st.session_state.gold += b_state["reward_gold"]
-            for c in st.session_state.creatures:
-              c["exp"] += b_state["reward_exp"]
-              if c["exp"] >= 100 and c["stage"] < 4:
-                c["stage"] += 1
-                c["exp"] = 0
             st.success(
-                f"🎉 ダンジョン完全踏破！ 報酬 {b_state['reward_gold']} G"
+                f"🎉 ダンジョン完全踏破！ 報酬として **{b_state['reward_gold']} G**"
                 " を獲得しました！"
             )
             st.session_state.battle_state = None
             st.rerun()
         else:
-          # 敵の反撃
           dmg_to_ally = max(
               3, current_enemy["atk"] - int(current_ally["def"] * 0.5)
           )
@@ -601,18 +591,16 @@ elif menu == "戦闘ステージ出撃":
             b_state["logs"].insert(
                 0, f"💥 {current_ally['name']} は戦闘不能になった！"
             )
-            # 生きている味方がいるか確認
             alive_indices = [
                 i for i, p in enumerate(party) if p["hp"] > 0
             ]
             if not alive_indices:
               st.error(
-                  "💀 パーティ全員が戦闘不能になりました…。作戦負けです。"
+                  "💀 パーティ全員が戦闘不能になりました…。育成ルームでステータスを強化して再挑戦しましょう。"
               )
               st.session_state.battle_state = None
               st.rerun()
             else:
-              # 自動で次の生きてるメンバーへ交代
               b_state["active_party_idx"] = alive_indices[0]
               b_state["logs"].insert(
                   0,
@@ -621,9 +609,7 @@ elif menu == "戦闘ステージ出撃":
               )
         st.rerun()
 
-    # 2. 味方交代セレクト＆ボタン
     with col_act2:
-      # 生きているメンバーのみ選択肢に
       alive_party = [
           (i, p) for i, p in enumerate(party) if p["hp"] > 0 and i != active_p_idx
       ]
@@ -641,7 +627,6 @@ elif menu == "戦闘ステージ出撃":
               f"🔄 前線を {party[active_p_idx]['name']} から"
               f" {sub_choice[1]['name']} に交代した！",
           )
-          # 交代時は敵からの反撃ターンになる
           dmg_to_ally = max(
               3, current_enemy["atk"] - int(sub_choice[1]["def"] * 0.5)
           )
@@ -668,18 +653,15 @@ elif menu == "戦闘ステージ出撃":
       else:
         st.write("交代できる控えがいません")
 
-    # 3. 撤退ボタン
     with col_act3:
       if st.button("🏳️ 降参して撤退", use_container_width=True):
-        st.warning(
-            "⚠️ ダンジョンから撤退しました。育成し直して再挑戦しましょう。"
-        )
+        st.warning("⚠️ ダンジョンから撤退しました。")
         st.session_state.battle_state = None
         st.rerun()
 
     st.divider()
     st.subheader("📜 リアルタイム戦闘ログ")
-    for log in b_state["logs"][:8]:  # 直近8件を表示
+    for log in b_state["logs"][:8]:
       st.text(log)
 
 # 4. 図鑑
@@ -704,5 +686,3 @@ elif menu == "図鑑":
               key = f"{b}_{e1}_{e2}_{w}"
               if key in st.session_state.unlocked_encyclopedia:
                 st.success(f"解放済\n`{e1}×{e2}`")
-              else:
-                st.code(f"未解放\n({e1}×{e2})", language="text")
