@@ -64,7 +64,7 @@ BATTLE_STAGES = {
                 "def": 8,
             },
         ],
-        "reward_gold": 500,
+        "reward_gold": 200,
         "reward_exp": 40,
     },
     "中級：機械神殿の遺跡": {
@@ -106,7 +106,7 @@ BATTLE_STAGES = {
                 "def": 18,
             },
         ],
-        "reward_gold": 1200,
+        "reward_gold": 400,
         "reward_exp": 70,
     },
     "上級：神葬の塔": {
@@ -148,7 +148,7 @@ BATTLE_STAGES = {
                 "def": 12,
             },
         ],
-        "reward_gold": 2500,
+        "reward_gold": 600,
         "reward_exp": 110,
     },
     "最上級：アルカディアの王座": {
@@ -190,7 +190,7 @@ BATTLE_STAGES = {
                 "def": 40,
             },
         ],
-        "reward_gold": 5000,
+        "reward_gold": 800,
         "reward_exp": 200,
     },
 }
