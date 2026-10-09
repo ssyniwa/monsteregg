@@ -519,7 +519,7 @@ elif menu == "戦闘ステージ出撃":
       )
       ally_img = load_image(current_ally["image"])
       if ally_img:
-        st.image(ally_img, width=200)
+        st.image(ally_img, width=300)
       st.progress(max(0.0, current_ally["hp"] / current_ally["max_hp"]))
       st.write(
           f"HP: **{max(0, current_ally['hp'])} / {current_ally['max_hp']}** |"
@@ -537,7 +537,7 @@ elif menu == "戦闘ステージ出撃":
       st.markdown(f"### 👹 敵: {current_enemy['name']}{boss_tag}")
       enemy_img = load_image(current_enemy["image"])
       if enemy_img:
-        st.image(enemy_img, width=200)
+        st.image(enemy_img, width=300)
       st.progress(max(0.0, current_enemy["hp"] / current_enemy["max_hp"]))
       st.write(
           f"HP: **{max(0, current_enemy['hp'])} / {current_enemy['max_hp']}** |"
