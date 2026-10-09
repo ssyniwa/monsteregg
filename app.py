@@ -107,7 +107,7 @@ BATTLE_STAGES = {
             },
         ],
         "reward_gold": 400,
-        "reward_exp": 70,
+        "reward_exp": 50,
     },
     "上級：神葬の塔": {
         "desc": "神話の兵器が眠る、過酷な試練の塔。",
@@ -149,7 +149,7 @@ BATTLE_STAGES = {
             },
         ],
         "reward_gold": 600,
-        "reward_exp": 110,
+        "reward_exp": 60,
     },
     "最上級：アルカディアの王座": {
         "desc": "すべての頂点に君臨する、神話級の守護者との決戦。",
@@ -191,7 +191,7 @@ BATTLE_STAGES = {
             },
         ],
         "reward_gold": 800,
-        "reward_exp": 200,
+        "reward_exp": 70,
     },
 }
 
