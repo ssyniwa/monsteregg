@@ -195,7 +195,7 @@ BATTLE_STAGES = {
     },
 }
 
-# 初期セッション状態の定義（初期資金を600に変更）
+# 初期セッション状態の定義（初期資金を600に変更）[cite: 4]
 if "gold" not in st.session_state:
   st.session_state.gold = 600
 if "unlocked_encyclopedia" not in st.session_state:
@@ -311,11 +311,11 @@ menu = st.sidebar.selectbox(
     "メニュー", ["育成ルーム", "素材調合・エサやり", "戦闘ステージ出撃", "図鑑"]
 )
 
-# 1. 育成ルーム
+# 1. 育成ルーム (特徴の選択と確定機能を統合)[cite: 4]
 if menu == "育成ルーム":
-  st.header("🧪 育成槽（3匹の管理 & 種族特性）")
+  st.header("🧪 育成槽（3匹の特徴設定 & ステータス管理）")
   st.markdown(
-      "種族ごとに**体力・攻撃・防御・素早さ**の特性が異なります。資金を使った育成でのみステータスと進化が進みます。"
+      "ここでは各実験体の**特徴（生物種・属性・武器種）の選択と確定**、および現在のステータス確認ができます。"
   )
   cols = st.columns(3)
 
@@ -326,14 +326,43 @@ if menu == "育成ルーム":
       if img:
         st.image(img, use_container_width=True)
 
+      # 育成ルーム内での特徴選択と確定フォーム
+      with st.form(key=f"config_form_{i}"):
+        st.markdown(f"**【 {c['name']} の特徴設定】**")
+        new_biome = st.selectbox(
+            "生物種", BIOMES, index=BIOMES.index(c["biome"]), key=f"biome_{i}"
+        )
+        new_elem1 = st.selectbox(
+            "主属性", ELEM1, index=ELEM1.index(c["elem1"]), key=f"elem1_{i}"
+        )
+        new_elem2 = st.selectbox(
+            "副属性", ELEM2, index=ELEM2.index(c["elem2"]), key=f"elem2_{i}"
+        )
+        new_weapon = st.selectbox(
+            "武器種",
+            WEAPONS,
+            index=WEAPONS.index(c["weapon"]),
+            key=f"weapon_{i}",
+        )
+
+        submitted = st.form_submit_button("特徴を確定する")
+        if submitted:
+          c["biome"] = new_biome
+          c["elem1"] = new_elem1
+          c["elem2"] = new_elem2
+          c["weapon"] = new_weapon
+          st.success(f"{c['name']} の特徴を更新・確定しました！")
+          st.rerun()
+
       stats = calculate_stats(c)
       st.info(
-          f"**生物種**: {c['biome']}\n\n"
-          f"**主属性**: {c['elem1']} | **副属性**: {c['elem2']}\n\n"
-          f"**武器種**: {c['weapon']}"
+          f"**確定中ステータス**\n\n"
+          f"- 生物種: {c['biome']}\n"
+          f"- 主属性: {c['elem1']} | 副属性: {c['elem2']}\n"
+          f"- 武器種: {c['weapon']}"
       )
       st.markdown(
-          f"❤️ **最大HP**: {stats['hp']} | ⚔️ **攻撃**: {stats['atk']} | 🛡️"
+          f"❤️ **HP**: {stats['hp']} | ⚔️ **攻撃**: {stats['atk']} | 🛡️"
           f" **防御**: {stats['def']} | ⚡ **素早さ**: {stats['spd']}"
       )
       st.write(f"成長度 (EXP): {c['exp']}/100")
@@ -344,31 +373,26 @@ if menu == "育成ルーム":
         if key not in st.session_state.unlocked_encyclopedia:
           st.session_state.unlocked_encyclopedia.append(key)
 
-# 2. 素材調合・エサやり (合計35制限・資金消費でのみ成長・強化)
+# 2. 素材調合・エサやり (ステータス強化・育成専用)[cite: 4]
 elif menu == "素材調合・エサやり":
   st.header("🥣 育成・エサやり & ステータス強化カスタム")
   st.markdown(
-      "素材と資金(200G)を投資して育成を行います。**1回のエサやりでのHP・攻撃・防御の上昇値の合計は最大35まで**に制限されています。"
+      "素材と資金(200G)を投資してステータス強化を行います。**1回のエサやりでのHP・攻撃・防御の上昇値の合計は最大35まで**に制限されています[cite: 4]。"
   )
 
   target_idx = st.selectbox(
-      "育成・強化する個体を選択",
+      "強化する個体を選択",
       [0, 1, 2],
       format_func=lambda x: st.session_state.creatures[x]["name"],
   )
   c = st.session_state.creatures[target_idx]
 
-  col1, col2 = st.columns(2)
-  with col1:
-    new_biome = st.selectbox(
-        "生物種（ベースボディ）", BIOMES, index=BIOMES.index(c["biome"])
-    )
-    new_elem1 = st.selectbox("主属性", ELEM1, index=ELEM1.index(c["elem1"]))
-  with col2:
-    new_elem2 = st.selectbox("副属性", ELEM2, index=ELEM2.index(c["elem2"]))
-    new_weapon = st.selectbox(
-        "武器種", WEAPONS, index=WEAPONS.index(c["weapon"])
-    )
+  st.write(
+      f"現在の対象: **{c['name']}** (生物種: {c['biome']} / 武器: {c['weapon']})"
+  )
+  st.markdown(
+      "※特徴の変更や再設定は**「育成ルーム」**で行ってからお越しください。"
+  )
 
   st.divider()
   st.subheader("💪 追加ステータス強化 (費用: 200G / 上昇合計上限: 35)")
@@ -392,10 +416,6 @@ elif menu == "素材調合・エサやり":
       cost = 200
       if st.session_state.gold >= cost:
         st.session_state.gold -= cost
-        c["biome"] = new_biome
-        c["elem1"] = new_elem1
-        c["elem2"] = new_elem2
-        c["weapon"] = new_weapon
         c["bonus_hp"] += inc_hp
         c["bonus_atk"] += inc_atk
         c["bonus_def"] += inc_def
@@ -408,20 +428,18 @@ elif menu == "素材調合・エサやり":
               f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
           )
         else:
-          st.success(
-              f"✨ {c['name']} の育成とステータス強化が完了しました！"
-          )
+          st.success(f"✨ {c['name']} のステータス強化が完了しました！")
         st.rerun()
       else:
         st.error(
             "❌ ゴールドが足りません！バトルステージでゴールドを稼ぎましょう。"
         )
 
-# 3. 戦闘ステージ出撃（クリア時自動成長なし・交代制バトル）
+# 3. 戦闘ステージ出撃（クリア時自動成長なし・交代制バトル）[cite: 4]
 elif menu == "戦闘ステージ出撃":
   st.header("⚔️ 交代制ターンバトル・ダンジョン探索")
   st.markdown(
-      "⚠️ **注意**: 戦闘に勝利してもキャラクターの経験値やステータスは自動で成長しません。バトルはあくまで資金（ゴールド）を稼ぐための手段です！"
+      "⚠️ **注意**: 戦闘に勝利してもキャラクターの経験値やステータスは自動で成長しません。バトルはあくまで資金（ゴールド）を稼ぐための手段です[cite: 4]！"
   )
 
   if st.session_state.battle_state is None:
@@ -568,7 +586,6 @@ elif menu == "戦闘ステージ出撃":
           b_state["active_enemy_idx"] = active_e_idx
 
           if active_e_idx >= len(enemies):
-            # 勝利処理（ゴールド報酬のみ付与、経験値や自動成長はなし）
             st.session_state.gold += b_state["reward_gold"]
             st.success(
                 f"🎉 ダンジョン完全踏破！ 報酬として **{b_state['reward_gold']} G**"
@@ -686,3 +703,5 @@ elif menu == "図鑑":
               key = f"{b}_{e1}_{e2}_{w}"
               if key in st.session_state.unlocked_encyclopedia:
                 st.success(f"解放済\n`{e1}×{e2}`")
+              else:
+                st.code(f"未解放\n({e1}×{e2})", language="text")
