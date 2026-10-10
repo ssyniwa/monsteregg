@@ -371,9 +371,7 @@ if "unlocked_encyclopedia" not in st.session_state:
 if "battle_state" not in st.session_state:
   st.session_state.battle_state = None
 if "game_cleared" not in st.session_state:
-  st.session_state.game_cleared = (
-      False  # 最上級クリア時の完全クリア画面用フラグ
-  )
+  st.session_state.game_cleared = False
 if "creatures" not in st.session_state:
   st.session_state.creatures = [
       {
@@ -488,7 +486,6 @@ if st.session_state.game_cleared:
 
   st.divider()
   if st.button("🔄 もう一度初めから遊ぶ", use_container_width=True):
-    # セッション状態をリセット
     st.session_state.gold = 600
     st.session_state.unlocked_encyclopedia = []
     st.session_state.battle_state = None
@@ -546,7 +543,7 @@ menu = st.sidebar.selectbox(
     "メニュー", ["育成ルーム", "素材調合・エサやり", "戦闘ステージ出撃", "図鑑"]
 )
 
-# 1. 育成ルーム (特徴の選択と確定機能を統合)[cite: 4]
+# 1. 育成ルーム
 if menu == "育成ルーム":
   st.header("🧪 育成槽（3匹の特徴設定 & ステータス管理）")
   st.markdown(
@@ -561,7 +558,6 @@ if menu == "育成ルーム":
       if img:
         st.image(img, use_container_width=True)
 
-      # 育成ルーム内での特徴選択と確定フォーム
       with st.form(key=f"config_form_{i}"):
         st.markdown(f"**【 {c['name']} の特徴設定】**")
         new_biome = st.selectbox(
@@ -601,7 +597,6 @@ if menu == "育成ルーム":
           f" **防御**: {stats['def']} | ⚡ **素早さ**: {stats['spd']}"
       )
 
-      # ステージ4かつEXP100超えの場合の表示切替
       if c["stage"] >= 4 and c["exp"] >= 100:
         st.warning("✨ **これ以上成長不可（最大形態到達）**")
         st.progress(1.0)
@@ -614,7 +609,7 @@ if menu == "育成ルーム":
         if key not in st.session_state.unlocked_encyclopedia:
           st.session_state.unlocked_encyclopedia.append(key)
 
-# 2. 素材調合・エサやり (ステータス強化・育成専用)[cite: 4]
+# 2. 素材調合・エサやり
 elif menu == "素材調合・エサやり":
   st.header("🥣 育成・エサやり & ステータス強化カスタム")
   st.markdown(
@@ -662,7 +657,7 @@ elif menu == "素材調合・エサやり":
         c["bonus_def"] += inc_def
 
         if c["stage"] >= 4:
-          c["exp"] = 100  # ステージ4なら100で維持
+          c["exp"] = 100
           st.success(
               f"✨ {c['name']} のステータス強化が完了しました！（これ以上成長不可）"
           )
@@ -682,7 +677,7 @@ elif menu == "素材調合・エサやり":
             "❌ ゴールドが足りません！バトルステージでゴールドを稼ぎましょう。"
         )
 
-# 3. 戦闘ステージ出撃（経験値獲得およびスキル攻撃実装）[cite: 4]
+# 3. 戦闘ステージ出撃
 elif menu == "戦闘ステージ出撃":
   st.header("⚔️ 交代制ターンバトル・ダンジョン探索")
   st.markdown(
@@ -729,6 +724,12 @@ elif menu == "戦闘ステージ出撃":
             "weapon": c["weapon"],
             "stage": c["stage"],
             "image": get_smart_creature_image(c)[1],
+            "cooldowns": {
+                "stage1": 0,
+                "stage2": 0,
+                "stage3": 0,
+                "stage4": 0,
+            },  # スキルごとのクールダウン管理
         })
 
       enemies = []
@@ -818,159 +819,204 @@ elif menu == "戦闘ステージ出撃":
 
     st.divider()
 
-    col_act1, col_act2, col_act3 = st.columns(3)
+    # ターン経過時のクールダウン減少処理用ヘルパー
+    def execute_turn_actions(used_skill_key=None, is_heal=False):
+      # クールダウンを1減らす
+      for p in party:
+        for k in p["cooldowns"]:
+          if p["cooldowns"][k] > 0:
+            if p["id"] == current_ally["id"] and k == used_skill_key:
+              pass  # 使用したスキルは後で設定
+            else:
+              p["cooldowns"][k] -= 1
 
-    # ステージに応じたスキル名と倍率の設定
-    stage = current_ally["stage"]
-    if stage == 1:
-      skill_name = "通常攻撃"
-      multiplier = 0.4
-    elif stage == 2:
-      skill_name = f"{current_ally['elem1']}属性の{current_ally['biome']}ブレス"
-      multiplier = 0.6
-    elif stage == 3:
-      skill_name = (
-          f"{current_ally['elem2']}を纏う{current_ally['biome']}の咆哮"
-      )
-      multiplier = 0.8
-    else:  # Stage 4
-      skill_name = (
-          f"神葬解放：{current_ally['elem1']}×{current_ally['elem2']}の"
-          f"{current_ally['biome']}・{current_ally['weapon']}"
-      )
-      multiplier = 1.0
-
-    with col_act1:
-      if st.button(
-          f"⚔️ {skill_name} ({int(multiplier*100)}%威力)",
-          use_container_width=True,
-      ):
-        dmg_to_enemy = max(
-            5, int(current_ally["atk"] * multiplier) - int(current_enemy["def"] * 0.5)
+      if used_skill_key:
+        # 威力に応じてクールダウンを設定 (威力大＝待機ターン増)
+        cd_map = {"stage1": 0, "stage2": 1, "stage3": 2, "stage4": 3}
+        current_ally["cooldowns"][used_skill_key] = cd_map.get(
+            used_skill_key, 0
         )
-        current_enemy["hp"] -= dmg_to_enemy
+
+      # 敵の反撃処理（回復行動時も敵の反撃を受ける）
+      dmg_to_ally = max(
+          3, current_enemy["atk"] - int(current_ally["def"] * 0.5)
+      )
+      current_ally["hp"] -= dmg_to_ally
+      b_state["logs"].insert(
+          0,
+          f"{current_enemy['name']} の反撃！ {current_ally['name']} に"
+          f" **{dmg_to_ally}** のダメージ！",
+      )
+
+      if current_ally["hp"] <= 0:
         b_state["logs"].insert(
-            0,
-            f"{current_ally['name']} の **{skill_name}**！"
-            f" {current_enemy['name']} に **{dmg_to_enemy}** のダメージ！",
+            0, f"💥 {current_ally['name']} は戦闘不能になった！"
         )
-
-        if current_enemy["hp"] <= 0:
-          b_state["logs"].insert(
-              0, f"✨ {current_enemy['name']} を倒した！"
+        alive_indices = [i for i, p in enumerate(party) if p["hp"] > 0]
+        if not alive_indices:
+          st.error(
+              "💀 パーティ全員が戦闘不能になりました…。育成ルームでステータスを強化して再挑戦しましょう。"
           )
-          active_e_idx += 1
-          b_state["active_enemy_idx"] = active_e_idx
-
-          if active_e_idx >= len(enemies):
-            # 勝利処理：ゴールドと経験値を付与
-            st.session_state.gold += b_state["reward_gold"]
-            exp_gained = b_state["reward_exp"]
-
-            evolution_messages = []
-            for c in st.session_state.creatures:
-              if c["stage"] >= 4:
-                c["exp"] = 100  # ステージ4なら100固定（これ以上成長不可）
-              else:
-                c["exp"] += exp_gained
-                if c["exp"] >= 100 and c["stage"] < 4:
-                  c["stage"] += 1
-                  c["exp"] = 0
-                  evolution_messages.append(
-                      f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
-                  )
-
-            st.success(
-                f"🎉 ダンジョン完全踏破！ 報酬として **{b_state['reward_gold']} G**"
-                f" と **EXP +{exp_gained}** を獲得しました！"
-            )
-            for emsg in evolution_messages:
-              st.info(emsg)
-
-            # 最上級ステージクリアの判定
-            if b_state["stage_name"] == "最上級：アルカディアの王座":
-              st.session_state.game_cleared = True
-
-            st.session_state.battle_state = None
-            st.rerun()
+          st.session_state.battle_state = None
+          st.rerun()
         else:
-          dmg_to_ally = max(
-              3, current_enemy["atk"] - int(current_ally["def"] * 0.5)
-          )
-          current_ally["hp"] -= dmg_to_ally
+          b_state["active_party_idx"] = alive_indices[0]
           b_state["logs"].insert(
               0,
-              f"{current_enemy['name']} の反撃！ {current_ally['name']} に"
-              f" **{dmg_to_ally}** のダメージ！",
+              f"🔄 控えの {party[alive_indices[0]]['name']} が前線に交代した！",
           )
 
-          if current_ally["hp"] <= 0:
-            b_state["logs"].insert(
-                0, f"💥 {current_ally['name']} は戦闘不能になった！"
-            )
-            alive_indices = [
-                i for i, p in enumerate(party) if p["hp"] > 0
-            ]
-            if not alive_indices:
-              st.error(
-                  "💀 パーティ全員が戦闘不能になりました…。育成ルームでステータスを強化して再挑戦しましょう。"
-              )
-              st.session_state.battle_state = None
-              st.rerun()
+    # 攻撃スキルの実行関数
+    def handle_skill_attack(skill_name, multiplier, skill_key):
+      dmg_to_enemy = max(
+          5, int(current_ally["atk"] * multiplier) - int(current_enemy["def"] * 0.5)
+      )
+      current_enemy["hp"] -= dmg_to_enemy
+      b_state["logs"].insert(
+          0,
+          f"{current_ally['name']} の **{skill_name}**！"
+          f" {current_enemy['name']} に **{dmg_to_enemy}** のダメージ！",
+      )
+
+      if current_enemy["hp"] <= 0:
+        b_state["logs"].insert(0, f"✨ {current_enemy['name']} を倒した！")
+        b_state["active_enemy_idx"] += 1
+
+        if b_state["active_enemy_idx"] >= len(enemies):
+          st.session_state.gold += b_state["reward_gold"]
+          exp_gained = b_state["reward_exp"]
+
+          evolution_messages = []
+          for c in st.session_state.creatures:
+            if c["stage"] >= 4:
+              c["exp"] = 100
             else:
-              b_state["active_party_idx"] = alive_indices[0]
-              b_state["logs"].insert(
-                  0,
-                  f"🔄 控えの {party[alive_indices[0]]['name']}"
-                  " が前線に交代した！",
-              )
+              c["exp"] += exp_gained
+              if c["exp"] >= 100 and c["stage"] < 4:
+                c["stage"] += 1
+                c["exp"] = 0
+                evolution_messages.append(
+                    f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
+                )
+
+          st.success(
+              f"🎉 ダンジョン完全踏破！ 報酬として **{b_state['reward_gold']} G**"
+              f" と **EXP +{exp_gained}** を獲得しました！"
+          )
+          for emsg in evolution_messages:
+            st.info(emsg)
+
+          if b_state["stage_name"] == "最上級：アルカディアの王座":
+            st.session_state.game_cleared = True
+
+          st.session_state.battle_state = None
+          st.rerun()
+      else:
+        execute_turn_actions(used_skill_key=skill_key)
+
+      st.rerun()
+
+    # コマンドボタンの配置（ステージに応じて解放されたスキルを表示）
+    st.markdown("### 🎮 バトルコマンド")
+    ally_stage = current_ally["stage"]
+
+    # スキル1: ステージ1以上で解放 (通常攻撃)
+    s1_name = "通常攻撃"
+    s1_mult = 0.4
+    s1_cd = current_ally["cooldowns"]["stage1"]
+
+    # スキル2: ステージ2以上で解放 (属性ブレス)
+    s2_name = f"{current_ally['elem1']}属性ブレス"
+    s2_mult = 0.6
+    s2_cd = current_ally["cooldowns"]["stage2"]
+
+    # スキル3: ステージ3以上で解放 (咆哮)
+    s3_name = f"{current_ally['elem2']}の咆哮"
+    s3_mult = 0.8
+    s3_cd = current_ally["cooldowns"]["stage3"]
+
+    # スキル4: ステージ4で解放 (神葬解放)
+    s4_name = f"神葬解放：{current_ally['weapon']}"
+    s4_mult = 1.0
+    s4_cd = current_ally["cooldowns"]["stage4"]
+
+    # ボタンレイアウト
+    cmd_cols = st.columns(5)
+
+    with cmd_cols[0]:
+      if s1_cd > 0:
+        st.button(f"⚔️ {s1_name}\n(CD: {s1_cd})", disabled=True)
+      else:
+        if st.button(f"⚔️ {s1_name}\n(40%)", use_container_width=True):
+          handle_skill_attack(s1_name, s1_mult, "stage1")
+
+    with cmd_cols[1]:
+      if ally_stage < 2:
+        st.button("🔒 未解放 (St2)", disabled=True)
+      elif s2_cd > 0:
+        st.button(f"🔥 属性ブレス\n(CD: {s2_cd})", disabled=True)
+      else:
+        if st.button(f"🔥 {s2_name}\n(60%)", use_container_width=True):
+          handle_skill_attack(s2_name, s2_mult, "stage2")
+
+    with cmd_cols[2]:
+      if ally_stage < 3:
+        st.button("🔒 未解放 (St3)", disabled=True)
+      elif s3_cd > 0:
+        st.button(f"🌀 咆哮\n(CD: {s3_cd})", disabled=True)
+      else:
+        if st.button(f"🌀 {s3_name}\n(80%)", use_container_width=True):
+          handle_skill_attack(s3_name, s3_mult, "stage3")
+
+    with cmd_cols[3]:
+      if ally_stage < 4:
+        st.button("🔒 未解放 (St4)", disabled=True)
+      elif s4_cd > 0:
+        st.button(f"✨ 神葬解放\n(CD: {s4_cd})", disabled=True)
+      else:
+        if st.button(f"✨ {s4_name}\n(100%)", use_container_width=True):
+          handle_skill_attack(s4_name, s4_mult, "stage4")
+
+    with cmd_cols[4]:
+      # 回復コマンド
+      if st.button("🌿 回復魔法\n(HP30%回復)", use_container_width=True):
+        heal_val = int(current_ally["max_hp"] * 0.3)
+        current_ally["hp"] = min(
+            current_ally["max_hp"], current_ally["hp"] + heal_val
+        )
+        b_state["logs"].insert(
+            0,
+            f"{current_ally['name']} は回復魔法を唱えた！ HPが **{heal_val}** 回復した！",
+        )
+        execute_turn_actions()
         st.rerun()
 
-    with col_act2:
+    st.divider()
+
+    # 交代・撤退用UI
+    sub_cols = st.columns(2)
+    with sub_cols[0]:
       alive_party = [
           (i, p) for i, p in enumerate(party) if p["hp"] > 0 and i != active_p_idx
       ]
       if alive_party:
         sub_choice = st.selectbox(
-            "交代先選択",
+            "控えメンバー交代",
             alive_party,
             format_func=lambda x: f"{x[1]['name']} (HP: {x[1]['hp']})",
-            label_visibility="collapsed",
         )
-        if st.button("🔄 メンバー交代", use_container_width=True):
+        if st.button("🔄 前線交代を実行"):
           b_state["active_party_idx"] = sub_choice[0]
           b_state["logs"].insert(
               0,
               f"🔄 前線を {party[active_p_idx]['name']} から"
               f" {sub_choice[1]['name']} に交代した！",
           )
-          dmg_to_ally = max(
-              3, current_enemy["atk"] - int(sub_choice[1]["def"] * 0.5)
-          )
-          sub_choice[1]["hp"] -= dmg_to_ally
-          b_state["logs"].insert(
-              0,
-              f"敵のスキを突かれ、{sub_choice[1]['name']} に"
-              f" **{dmg_to_ally}** のダメージ！",
-          )
-          if sub_choice[1]["hp"] <= 0:
-            b_state["logs"].insert(
-                0, f"💥 {sub_choice[1]['name']} は戦闘不能になった！"
-            )
-            remaining_alive = [
-                i for i, p in enumerate(party) if p["hp"] > 0
-            ]
-            if not remaining_alive:
-              st.error("💀 全滅しました…")
-              st.session_state.battle_state = None
-              st.rerun()
-            else:
-              b_state["active_party_idx"] = remaining_alive[0]
           st.rerun()
       else:
         st.write("交代できる控えがいません")
 
-    with col_act3:
+    with sub_cols[1]:
       if st.button("🏳️ 降参して撤退", use_container_width=True):
         st.warning("⚠️ ダンジョンから撤退しました。")
         st.session_state.battle_state = None
