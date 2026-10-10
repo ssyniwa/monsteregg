@@ -64,8 +64,8 @@ BATTLE_STAGES = {
                 "def": 8,
             },
         ],
-        "reward_gold": 250,
-        "reward_exp": 30,
+        "reward_gold": 200,
+        "reward_exp": 10,
     },
     "中級①：機械神殿の遺跡": {
         "desc": "古代の防衛機構が目覚めた危険な遺跡。",
@@ -106,8 +106,8 @@ BATTLE_STAGES = {
                 "def": 15,
             },
         ],
-        "reward_gold": 450,
-        "reward_exp": 45,
+        "reward_gold": 400,
+        "reward_exp": 20,
     },
     "中級②：水晶の鉱山": {
         "desc": "硬質な結晶に覆われた魔力あふれる鉱山地帯。",
@@ -148,8 +148,8 @@ BATTLE_STAGES = {
                 "def": 10,
             },
         ],
-        "reward_gold": 500,
-        "reward_exp": 50,
+        "reward_gold": 450,
+        "reward_exp": 25,
     },
     "中級③：沈黙の回廊": {
         "desc": "不気味な静寂に包まれた魔術師たちの廃墟。",
@@ -190,8 +190,8 @@ BATTLE_STAGES = {
                 "def": 20,
             },
         ],
-        "reward_gold": 550,
-        "reward_exp": 55,
+        "reward_gold": 500,
+        "reward_exp": 30,
     },
     "上級①：神葬の塔": {
         "desc": "神話の兵器が眠る、過酷な試練の塔。",
@@ -232,8 +232,8 @@ BATTLE_STAGES = {
                 "def": 12,
             },
         ],
-        "reward_gold": 800,
-        "reward_exp": 75,
+        "reward_gold": 550,
+        "reward_exp": 35,
     },
     "上級②：業火の溶岩洞": {
         "desc": "マグマが煮えたぎる過酷な地底ダンジョン。",
@@ -274,8 +274,8 @@ BATTLE_STAGES = {
                 "def": 18,
             },
         ],
-        "reward_gold": 900,
-        "reward_exp": 85,
+        "reward_gold": 600,
+        "reward_exp": 40,
     },
     "上級③：虚空の聖堂": {
         "desc": "歪んだ時空と異界の気配が漂う聖堂跡。",
@@ -316,8 +316,8 @@ BATTLE_STAGES = {
                 "def": 20,
             },
         ],
-        "reward_gold": 1050,
-        "reward_exp": 95,
+        "reward_gold": 650,
+        "reward_exp": 45,
     },
     "最上級：アルカディアの王座": {
         "desc": "すべての頂点に君臨する、神話級の守護者との決戦。",
@@ -358,8 +358,8 @@ BATTLE_STAGES = {
                 "def": 40,
             },
         ],
-        "reward_gold": 1500,
-        "reward_exp": 130,
+        "reward_gold": 700,
+        "reward_exp": 50,
     },
 }
 
