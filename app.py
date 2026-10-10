@@ -745,15 +745,15 @@ elif menu == "戦闘ステージ出撃":
     stage = current_ally["stage"]
     if stage == 1:
       skill_name = "通常攻撃"
-      multiplier = 0.3
+      multiplier = 0.6
     elif stage == 2:
       skill_name = f"{current_ally['elem1']}属性の{current_ally['biome']}ブレス"
-      multiplier = 0.5
+      multiplier = 0.7
     elif stage == 3:
       skill_name = (
           f"{current_ally['elem2']}を纏う{current_ally['biome']}の咆哮"
       )
-      multiplier = 0.7
+      multiplier = 0.8
     else:  # Stage 4
       skill_name = (
           f"神葬解放：{current_ally['elem1']}×{current_ally['elem2']}の"
