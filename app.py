@@ -414,7 +414,7 @@ if "creatures" not in st.session_state:
 # ステータス計算ヘルパー
 def calculate_stats(c):
   base = BIOME_STATS[c["biome"]]
-  stage_mult = 1.0 + (c["stage"] - 1) * 0.4
+  stage_mult = 1.0 + (c["stage"] - 1) * 0.1
   max_hp = int((base["hp"] + c["bonus_hp"]) * stage_mult)
   atk = int((base["atk"] + c["bonus_atk"]) * stage_mult)
   defense = int((base["def"] + c["bonus_def"]) * stage_mult)
