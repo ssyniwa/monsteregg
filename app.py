@@ -23,7 +23,7 @@ BIOME_STATS = {
     "水棲型": {"hp": 190, "atk": 12, "def": 15, "spd": 8},
 }
 
-# 各難易度のステージ（ボス1体 ＋ 配下4体の構成）
+# 各難易度のステージ（初級1、中級3、上級3、最上級1の計8ステージ）
 BATTLE_STAGES = {
     "初級：魔石の林": {
         "desc": "魔力を帯びた植物と小型モンスターがうろつく森。",
@@ -64,52 +64,136 @@ BATTLE_STAGES = {
                 "def": 8,
             },
         ],
-        "reward_gold": 200,
-        "reward_exp": 40,
+        "reward_gold": 250,
+        "reward_exp": 30,
     },
-    "中級：機械神殿の遺跡": {
+    "中級①：機械神殿の遺跡": {
         "desc": "古代の防衛機構が目覚めた危険な遺跡。",
         "boss": {
             "name": "ガーディアン・ゴーレム (ボス)",
             "image": "enemy_ruins_boss.jpg",
-            "hp": 380,
-            "atk": 45,
-            "def": 25,
+            "hp": 350,
+            "atk": 40,
+            "def": 20,
         },
         "minions": [
             {
                 "name": "ブロークン・ドローン",
                 "image": "enemy_ruins_minion1.jpg",
-                "hp": 80,
-                "atk": 20,
-                "def": 10,
+                "hp": 70,
+                "atk": 18,
+                "def": 8,
             },
             {
                 "name": "セントリータレット",
                 "image": "enemy_ruins_minion2.jpg",
-                "hp": 90,
-                "atk": 25,
-                "def": 12,
+                "hp": 80,
+                "atk": 22,
+                "def": 10,
             },
             {
                 "name": "ガード・スフィア",
                 "image": "enemy_ruins_minion3.jpg",
-                "hp": 70,
-                "atk": 22,
-                "def": 15,
+                "hp": 60,
+                "atk": 20,
+                "def": 12,
             },
             {
                 "name": "プロト・ナイト",
                 "image": "enemy_ruins_minion4.jpg",
-                "hp": 110,
-                "atk": 28,
-                "def": 18,
+                "hp": 100,
+                "atk": 25,
+                "def": 15,
             },
         ],
-        "reward_gold": 400,
+        "reward_gold": 450,
+        "reward_exp": 45,
+    },
+    "中級②：水晶の鉱山": {
+        "desc": "硬質な結晶に覆われた魔力あふれる鉱山地帯。",
+        "boss": {
+            "name": "クリスタル・ガーディアン (ボス)",
+            "image": "enemy_crystal_boss.jpg",
+            "hp": 380,
+            "atk": 42,
+            "def": 25,
+        },
+        "minions": [
+            {
+                "name": "鉱石ビースト",
+                "image": "enemy_crystal_minion1.jpg",
+                "hp": 75,
+                "atk": 19,
+                "def": 10,
+            },
+            {
+                "name": "水晶コウモリ",
+                "image": "enemy_crystal_minion2.jpg",
+                "hp": 65,
+                "atk": 21,
+                "def": 8,
+            },
+            {
+                "name": "ゴーレム・カケラ",
+                "image": "enemy_crystal_minion3.jpg",
+                "hp": 90,
+                "atk": 20,
+                "def": 15,
+            },
+            {
+                "name": "ジェム・スライム",
+                "image": "enemy_crystal_minion4.jpg",
+                "hp": 85,
+                "atk": 24,
+                "def": 10,
+            },
+        ],
+        "reward_gold": 500,
         "reward_exp": 50,
     },
-    "上級：神葬の塔": {
+    "中級③：沈黙の回廊": {
+        "desc": "不気味な静寂に包まれた魔術師たちの廃墟。",
+        "boss": {
+            "name": "サイレント・スペクター (ボス)",
+            "image": "enemy_silent_boss.jpg",
+            "hp": 400,
+            "atk": 48,
+            "def": 18,
+        },
+        "minions": [
+            {
+                "name": "リビング・アーマー",
+                "image": "enemy_silent_minion1.jpg",
+                "hp": 95,
+                "atk": 22,
+                "def": 18,
+            },
+            {
+                "name": "シャドウ・クリープ",
+                "image": "enemy_silent_minion2.jpg",
+                "hp": 70,
+                "atk": 26,
+                "def": 6,
+            },
+            {
+                "name": "ファントム・アイ",
+                "image": "enemy_silent_minion3.jpg",
+                "hp": 60,
+                "atk": 28,
+                "def": 5,
+            },
+            {
+                "name": "呪われた彫像",
+                "image": "enemy_silent_minion4.jpg",
+                "hp": 110,
+                "atk": 23,
+                "def": 20,
+            },
+        ],
+        "reward_gold": 550,
+        "reward_exp": 55,
+    },
+    "上級①：神葬の塔": {
         "desc": "神話の兵器が眠る、過酷な試練の塔。",
         "boss": {
             "name": "ファントム・ナイト (ボス)",
@@ -148,8 +232,92 @@ BATTLE_STAGES = {
                 "def": 12,
             },
         ],
-        "reward_gold": 600,
-        "reward_exp": 60,
+        "reward_gold": 800,
+        "reward_exp": 75,
+    },
+    "上級②：業火の溶岩洞": {
+        "desc": "マグマが煮えたぎる過酷な地底ダンジョン。",
+        "boss": {
+            "name": "マグマ・ドラゴン (ボス)",
+            "image": "enemy_lava_boss.jpg",
+            "hp": 650,
+            "atk": 75,
+            "def": 30,
+        },
+        "minions": [
+            {
+                "name": "フレイム・リザード",
+                "image": "enemy_lava_minion1.jpg",
+                "hp": 140,
+                "atk": 38,
+                "def": 16,
+            },
+            {
+                "name": "マグマ・スライム",
+                "image": "enemy_lava_minion2.jpg",
+                "hp": 150,
+                "atk": 36,
+                "def": 20,
+            },
+            {
+                "name": "インプ・ウォーリア",
+                "image": "enemy_lava_minion3.jpg",
+                "hp": 125,
+                "atk": 44,
+                "def": 12,
+            },
+            {
+                "name": "ヘルハウンド",
+                "image": "enemy_lava_minion4.jpg",
+                "hp": 155,
+                "atk": 42,
+                "def": 18,
+            },
+        ],
+        "reward_gold": 900,
+        "reward_exp": 85,
+    },
+    "上級③：虚空の聖堂": {
+        "desc": "歪んだ時空と異界の気配が漂う聖堂跡。",
+        "boss": {
+            "name": "ヴォイド・マスター (ボス)",
+            "image": "enemy_void_boss.jpg",
+            "hp": 720,
+            "atk": 82,
+            "def": 38,
+        },
+        "minions": [
+            {
+                "name": "アビス・ウォーカー",
+                "image": "enemy_void_minion1.jpg",
+                "hp": 150,
+                "atk": 42,
+                "def": 18,
+            },
+            {
+                "name": "カオス・ウィスプ",
+                "image": "enemy_void_minion2.jpg",
+                "hp": 130,
+                "atk": 48,
+                "def": 14,
+            },
+            {
+                "name": "スター・キメラ",
+                "image": "enemy_void_minion3.jpg",
+                "hp": 170,
+                "atk": 45,
+                "def": 22,
+            },
+            {
+                "name": "虚空の番犬",
+                "image": "enemy_void_minion4.jpg",
+                "hp": 160,
+                "atk": 50,
+                "def": 20,
+            },
+        ],
+        "reward_gold": 1050,
+        "reward_exp": 95,
     },
     "最上級：アルカディアの王座": {
         "desc": "すべての頂点に君臨する、神話級の守護者との決戦。",
@@ -190,12 +358,12 @@ BATTLE_STAGES = {
                 "def": 40,
             },
         ],
-        "reward_gold": 800,
-        "reward_exp": 70,
+        "reward_gold": 1500,
+        "reward_exp": 130,
     },
 }
 
-# 初期セッション状態の定義（初期資金を600に変更）[cite: 4]
+# 初期セッション状態の定義（初期資金を600に変更）
 if "gold" not in st.session_state:
   st.session_state.gold = 600
 if "unlocked_encyclopedia" not in st.session_state:
@@ -435,11 +603,11 @@ elif menu == "素材調合・エサやり":
             "❌ ゴールドが足りません！バトルステージでゴールドを稼ぎましょう。"
         )
 
-# 3. 戦闘ステージ出撃（成長段階に応じたスキル攻撃実装）[cite: 4]
+# 3. 戦闘ステージ出撃（経験値獲得およびスキル攻撃実装）[cite: 4]
 elif menu == "戦闘ステージ出撃":
   st.header("⚔️ 交代制ターンバトル・ダンジョン探索")
   st.markdown(
-      "⚠️ **注意**: 戦闘に勝利してもキャラクターの経験値やステータスは自動で成長しません。バトルはあくまで資金（ゴールド）を稼ぐための手段です[cite: 4]！"
+      "⚠️ **注意**: 戦闘に勝利するとゴールドに加えて**経験値が獲得**でき、パーティ全体の育成が進みます[cite: 4]！"
   )
 
   if st.session_state.battle_state is None:
@@ -456,7 +624,8 @@ elif menu == "戦闘ステージ出撃":
           f"📦 **配下モンスター**: {len(stage_info['minions'])}体 (最初に迎撃)"
       )
       st.write(
-          f"🎁 勝利報酬: 💰 **{stage_info['reward_gold']} G** (※経験値の獲得はありません)"
+          f"🎁 勝利報酬: 💰 **{stage_info['reward_gold']} G** / 🌟 経験値"
+          f" **{stage_info['reward_exp']}**"
       )
     with col_img:
       boss_img = load_image(stage_info["boss"]["image"])
@@ -516,6 +685,7 @@ elif menu == "戦闘ステージ出撃":
               f"敵の群れ（配下4体 ＋ ボス1体）が現れた！",
           ],
           "reward_gold": stage_info["reward_gold"],
+          "reward_exp": stage_info["reward_exp"],
       }
       st.rerun()
 
@@ -575,15 +745,15 @@ elif menu == "戦闘ステージ出撃":
     stage = current_ally["stage"]
     if stage == 1:
       skill_name = "通常攻撃"
-      multiplier = 0.6
+      multiplier = 0.3
     elif stage == 2:
       skill_name = f"{current_ally['elem1']}属性の{current_ally['biome']}ブレス"
-      multiplier = 0.7
+      multiplier = 0.5
     elif stage == 3:
       skill_name = (
           f"{current_ally['elem2']}を纏う{current_ally['biome']}の咆哮"
       )
-      multiplier = 0.8
+      multiplier = 0.7
     else:  # Stage 4
       skill_name = (
           f"神葬解放：{current_ally['elem1']}×{current_ally['elem2']}の"
@@ -614,11 +784,27 @@ elif menu == "戦闘ステージ出撃":
           b_state["active_enemy_idx"] = active_e_idx
 
           if active_e_idx >= len(enemies):
+            # 勝利処理：ゴールドと経験値を付与
             st.session_state.gold += b_state["reward_gold"]
+            exp_gained = b_state["reward_exp"]
+
+            evolution_messages = []
+            for c in st.session_state.creatures:
+              c["exp"] += exp_gained
+              if c["exp"] >= 100 and c["stage"] < 4:
+                c["stage"] += 1
+                c["exp"] = 0
+                evolution_messages.append(
+                    f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
+                )
+
             st.success(
                 f"🎉 ダンジョン完全踏破！ 報酬として **{b_state['reward_gold']} G**"
-                " を獲得しました！"
+                f" と **EXP +{exp_gained}** を獲得しました！"
             )
+            for emsg in evolution_messages:
+              st.info(emsg)
+
             st.session_state.battle_state = None
             st.rerun()
         else:
