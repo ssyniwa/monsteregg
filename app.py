@@ -363,13 +363,17 @@ BATTLE_STAGES = {
     },
 }
 
-# 初期セッション状態の定義（初期資金を600に変更）
+# 初期セッション状態の定義
 if "gold" not in st.session_state:
   st.session_state.gold = 600
 if "unlocked_encyclopedia" not in st.session_state:
   st.session_state.unlocked_encyclopedia = []
 if "battle_state" not in st.session_state:
   st.session_state.battle_state = None
+if "game_cleared" not in st.session_state:
+  st.session_state.game_cleared = (
+      False  # 最上級クリア時の完全クリア画面用フラグ
+  )
 if "creatures" not in st.session_state:
   st.session_state.creatures = [
       {
@@ -470,6 +474,69 @@ def load_image(filename):
 
 
 # ==========================================
+# 完全クリア画面の表示判定
+# ==========================================
+if st.session_state.game_cleared:
+  st.balloons()
+  st.title("🏆 祝・神葬アトリエ完全クリア！")
+  st.markdown(
+      "### すべての試練を乗り越え、神話級の神葬武器を持つ者たちがここに降臨した！"
+  )
+  st.write(
+      "アルカディアの箱庭に平和と真理をもたらしたあなたに、最高の栄誉が与えられます。"
+  )
+
+  st.divider()
+  if st.button("🔄 もう一度初めから遊ぶ", use_container_width=True):
+    # セッション状態をリセット
+    st.session_state.gold = 600
+    st.session_state.unlocked_encyclopedia = []
+    st.session_state.battle_state = None
+    st.session_state.game_cleared = False
+    st.session_state.creatures = [
+        {
+            "name": "実験体α",
+            "stage": 1,
+            "biome": "ドラゴン型",
+            "elem1": "炎",
+            "elem2": "結晶",
+            "weapon": "ロングソード",
+            "exp": 0,
+            "bonus_hp": 0,
+            "bonus_atk": 0,
+            "bonus_def": 0,
+        },
+        {
+            "name": "実験体β",
+            "stage": 1,
+            "biome": "獣型",
+            "elem1": "雷",
+            "elem2": "血",
+            "weapon": "大鎌",
+            "exp": 0,
+            "bonus_hp": 0,
+            "bonus_atk": 0,
+            "bonus_def": 0,
+        },
+        {
+            "name": "実験体γ",
+            "stage": 1,
+            "biome": "昆虫型",
+            "elem1": "氷",
+            "elem2": "植物",
+            "weapon": "弓",
+            "exp": 0,
+            "bonus_hp": 0,
+            "bonus_atk": 0,
+            "bonus_def": 0,
+        },
+    ]
+    st.rerun()
+
+  st.stop()
+
+
+# ==========================================
 # UI & ナビゲーション
 # ==========================================
 st.title("⚔️ 神葬アトリエ：交代制バトル＆育成工房")
@@ -533,8 +600,14 @@ if menu == "育成ルーム":
           f"❤️ **HP**: {stats['hp']} | ⚔️ **攻撃**: {stats['atk']} | 🛡️"
           f" **防御**: {stats['def']} | ⚡ **素早さ**: {stats['spd']}"
       )
-      st.write(f"成長度 (EXP): {c['exp']}/100")
-      st.progress(c["exp"] / 100.0)
+
+      # ステージ4かつEXP100超えの場合の表示切替
+      if c["stage"] >= 4 and c["exp"] >= 100:
+        st.warning("✨ **これ以上成長不可（最大形態到達）**")
+        st.progress(1.0)
+      else:
+        st.write(f"成長度 (EXP): {c['exp']}/100")
+        st.progress(c["exp"] / 100.0)
 
       if c["stage"] >= 4:
         key = f"{c['biome']}_{c['elem1']}_{c['elem2']}_{c['weapon']}"
@@ -587,16 +660,22 @@ elif menu == "素材調合・エサやり":
         c["bonus_hp"] += inc_hp
         c["bonus_atk"] += inc_atk
         c["bonus_def"] += inc_def
-        c["exp"] += 45
 
-        if c["exp"] >= 100 and c["stage"] < 4:
-          c["stage"] += 1
-          c["exp"] = 0
+        if c["stage"] >= 4:
+          c["exp"] = 100  # ステージ4なら100で維持
           st.success(
-              f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
+              f"✨ {c['name']} のステータス強化が完了しました！（これ以上成長不可）"
           )
         else:
-          st.success(f"✨ {c['name']} のステータス強化が完了しました！")
+          c["exp"] += 45
+          if c["exp"] >= 100 and c["stage"] < 4:
+            c["stage"] += 1
+            c["exp"] = 0
+            st.success(
+                f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
+            )
+          else:
+            st.success(f"✨ {c['name']} のステータス強化が完了しました！")
         st.rerun()
       else:
         st.error(
@@ -790,13 +869,16 @@ elif menu == "戦闘ステージ出撃":
 
             evolution_messages = []
             for c in st.session_state.creatures:
-              c["exp"] += exp_gained
-              if c["exp"] >= 100 and c["stage"] < 4:
-                c["stage"] += 1
-                c["exp"] = 0
-                evolution_messages.append(
-                    f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
-                )
+              if c["stage"] >= 4:
+                c["exp"] = 100  # ステージ4なら100固定（これ以上成長不可）
+              else:
+                c["exp"] += exp_gained
+                if c["exp"] >= 100 and c["stage"] < 4:
+                  c["stage"] += 1
+                  c["exp"] = 0
+                  evolution_messages.append(
+                      f"✨ {c['name']} が ステージ {c['stage']} に進化しました！"
+                  )
 
             st.success(
                 f"🎉 ダンジョン完全踏破！ 報酬として **{b_state['reward_gold']} G**"
@@ -804,6 +886,10 @@ elif menu == "戦闘ステージ出撃":
             )
             for emsg in evolution_messages:
               st.info(emsg)
+
+            # 最上級ステージクリアの判定
+            if b_state["stage_name"] == "最上級：アルカディアの王座":
+              st.session_state.game_cleared = True
 
             st.session_state.battle_state = None
             st.rerun()
