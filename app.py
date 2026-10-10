@@ -195,7 +195,7 @@ BATTLE_STAGES = {
     },
 }
 
-# 初期セッション状態の定義（初期資金を600に変更）
+# 初期セッション状態の定義（初期資金を600に変更）[cite: 4]
 if "gold" not in st.session_state:
   st.session_state.gold = 600
 if "unlocked_encyclopedia" not in st.session_state:
@@ -435,11 +435,11 @@ elif menu == "素材調合・エサやり":
             "❌ ゴールドが足りません！バトルステージでゴールドを稼ぎましょう。"
         )
 
-# 3. 戦闘ステージ出撃（クリア時自動成長なし・交代制バトル）
+# 3. 戦闘ステージ出撃（成長段階に応じたスキル攻撃実装）[cite: 4]
 elif menu == "戦闘ステージ出撃":
   st.header("⚔️ 交代制ターンバトル・ダンジョン探索")
   st.markdown(
-      "⚠️ **注意**: 戦闘に勝利してもキャラクターの経験値やステータスは自動で成長しません。バトルはあくまで資金（ゴールド）を稼ぐための手段です！"
+      "⚠️ **注意**: 戦闘に勝利してもキャラクターの経験値やステータスは自動で成長しません。バトルはあくまで資金（ゴールド）を稼ぐための手段です[cite: 4]！"
   )
 
   if st.session_state.battle_state is None:
@@ -476,6 +476,10 @@ elif menu == "戦闘ステージ出撃":
             "def": st_data["def"],
             "spd": st_data["spd"],
             "biome": c["biome"],
+            "elem1": c["elem1"],
+            "elem2": c["elem2"],
+            "weapon": c["weapon"],
+            "stage": c["stage"],
             "image": get_smart_creature_image(c)[1],
         })
 
@@ -533,7 +537,8 @@ elif menu == "戦闘ステージ出撃":
 
     with col_ally_field:
       st.markdown(
-          f"### 🛡️ 味方前衛: {current_ally['name']} ({current_ally['biome']})"
+          f"### 🛡️ 味方前衛: {current_ally['name']} (Stage"
+          f" {current_ally['stage']})"
       )
       ally_img = load_image(current_ally["image"])
       if ally_img:
@@ -566,16 +571,39 @@ elif menu == "戦闘ステージ出撃":
 
     col_act1, col_act2, col_act3 = st.columns(3)
 
+    # ステージに応じたスキル名と倍率の設定
+    stage = current_ally["stage"]
+    if stage == 1:
+      skill_name = "通常攻撃"
+      multiplier = 0.3
+    elif stage == 2:
+      skill_name = f"{current_ally['elem1']}属性の{current_ally['biome']}ブレス"
+      multiplier = 0.5
+    elif stage == 3:
+      skill_name = (
+          f"{current_ally['elem2']}を纏う{current_ally['biome']}の咆哮"
+      )
+      multiplier = 0.7
+    else:  # Stage 4
+      skill_name = (
+          f"神葬解放：{current_ally['elem1']}×{current_ally['elem2']}の"
+          f"{current_ally['biome']}・{current_ally['weapon']}"
+      )
+      multiplier = 1.0
+
     with col_act1:
-      if st.button("⚔️ 通常攻撃", use_container_width=True):
+      if st.button(
+          f"⚔️ {skill_name} ({int(multiplier*100)}%威力)",
+          use_container_width=True,
+      ):
         dmg_to_enemy = max(
-            5, current_ally["atk"] - int(current_enemy["def"] * 0.5)
+            5, int(current_ally["atk"] * multiplier) - int(current_enemy["def"] * 0.5)
         )
         current_enemy["hp"] -= dmg_to_enemy
         b_state["logs"].insert(
             0,
-            f"{current_ally['name']} の攻撃！ {current_enemy['name']} に"
-            f" **{dmg_to_enemy}** のダメージ！",
+            f"{current_ally['name']} の **{skill_name}**！"
+            f" {current_enemy['name']} に **{dmg_to_enemy}** のダメージ！",
         )
 
         if current_enemy["hp"] <= 0:
