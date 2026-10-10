@@ -540,7 +540,7 @@ st.title("⚔️ 神葬アトリエ：交代制バトル＆育成工房")
 st.sidebar.markdown(f"### 💰 所持金: {st.session_state.gold} G")
 
 menu = st.sidebar.selectbox(
-    "メニュー", ["育成ルーム", "素材調合・エサやり", "戦闘ステージ出撃", "図鑑"]
+    "メニュー", ["育成ルーム", "素材調合・エサやり", "戦闘ステージ出撃"]
 )
 
 # 1. 育成ルーム
@@ -1027,27 +1027,4 @@ elif menu == "戦闘ステージ出撃":
     for log in b_state["logs"][:8]:
       st.text(log)
 
-# 4. 図鑑
-elif menu == "図鑑":
-  st.header("📖 神葬アルカディア図鑑")
-  unlocked_count = len(st.session_state.unlocked_encyclopedia)
-  st.metric(
-      label="コンプリート状況",
-      value=f"{unlocked_count} / {len(BIOMES) * len(ELEM1) * len(ELEM2) * len(WEAPONS)}",
-  )
-  st.divider()
 
-  for b in BIOMES:
-    with st.expander(f"📌 生物種ベース: {b}"):
-      for w in WEAPONS:
-        st.markdown(f"**【 武器種: {w} 】**")
-        cols = st.columns(3)
-        for i, e1 in enumerate(ELEM1):
-          with cols[i]:
-            st.caption(f"主属性: {e1}")
-            for e2 in ELEM2:
-              key = f"{b}_{e1}_{e2}_{w}"
-              if key in st.session_state.unlocked_encyclopedia:
-                st.success(f"解放済\n`{e1}×{e2}`")
-              else:
-                st.code(f"未解放\n({e1}×{e2})", language="text")
