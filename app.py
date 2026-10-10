@@ -17,10 +17,10 @@ WEAPONS = ["ロングソード", "大鎌", "銃", "弓"]
 # 種族ごとの基本ステータス補正係数 (HP, 攻撃力, 防御力, 素早さ)
 BIOME_STATS = {
     "ドラゴン型": {"hp": 170, "atk": 25, "def": 10, "spd": 10},
-    "獣型": {"hp": 150, "atk": 18, "def": 5, "spd": 18},
+    "獣型": {"hp": 150, "atk": 20, "def": 5, "spd": 18},
     "昆虫型": {"hp": 120, "atk": 22, "def": 3, "spd": 25},
-    "飛行型": {"hp": 130, "atk": 15, "def": 2, "spd": 30},
-    "水棲型": {"hp": 190, "atk": 12, "def": 15, "spd": 8},
+    "飛行型": {"hp": 130, "atk": 18, "def": 2, "spd": 30},
+    "水棲型": {"hp": 190, "atk": 15, "def": 15, "spd": 8},
 }
 
 # 各難易度のステージ（初級1、中級3、上級3、最上級1の計8ステージ）
@@ -745,10 +745,10 @@ elif menu == "戦闘ステージ出撃":
     stage = current_ally["stage"]
     if stage == 1:
       skill_name = "通常攻撃"
-      multiplier = 0.6
+      multiplier = 0.4
     elif stage == 2:
       skill_name = f"{current_ally['elem1']}属性の{current_ally['biome']}ブレス"
-      multiplier = 0.7
+      multiplier = 0.6
     elif stage == 3:
       skill_name = (
           f"{current_ally['elem2']}を纏う{current_ally['biome']}の咆哮"
