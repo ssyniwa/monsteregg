@@ -52,12 +52,13 @@ pip install streamlit pillow
 ```bash
 streamlit run app.py
 ```
-📂 プロジェクト構成 (File Structure)
-Plaintext
+## 📂 プロジェクト構成 (File Structure)
+```bash
 ├── app.py              # メインアプリケーションコード（Streamlit）
 ├── assets/             # モンスターやキャラクターの画像アセット格納フォルダ
 │   ├── stage1_*.jpg
 │   └── ...
 └── README.md           # プロジェクト説明書
-📜 ライセンス (License)
+```
+##📜 ライセンス (License)
 本アプリケーションは個人開発・学習用のプロジェクトです。
