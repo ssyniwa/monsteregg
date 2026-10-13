@@ -60,5 +60,5 @@ streamlit run app.py
 │   └── ...
 └── README.md           # プロジェクト説明書
 ```
-##📜 ライセンス (License)
+## 📜 ライセンス (License)
 本アプリケーションは個人開発・学習用のプロジェクトです。
